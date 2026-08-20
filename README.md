@@ -46,9 +46,9 @@ USB flash drive
       +-- Partition 2 -> ext4 -> /overlay (extroot)
 ```
 
-After reboot, OpenWrt continues to boot from its normal firmware, but the writable overlay is moved to the USB drive. This is the standard OpenWrt extroot model and greatly increases the space available for packages.
+After reboot, OpenWrt continues to boot from its normal firmware, but the writable overlay is moved to the USB drive. This greatly increases the space available for packages and applications.
 
-The project follows OpenWrt's documented extroot approach: `block-mount`, an ext4 external partition, copying the current overlay, and configuring `/etc/config/fstab` by filesystem UUID.
+The project follows OpenWrt's standard extroot approach: `block-mount`, an ext4 external partition, copying the current overlay, and configuring `/etc/config/fstab` by filesystem UUID.
 
 ## Safety design
 
@@ -82,9 +82,28 @@ kmod-fs-ext4
 
 `kmod-usb-storage-uas` is attempted as an optional package for compatible USB storage.
 
-## Installation
+## Quick installation
 
-Clone or copy the project to your OpenWrt router, then run:
+The installer is available in the repository root as `install.sh`. To run it directly on OpenWrt:
+
+```sh
+wget -O /tmp/openwrt-usb-extroot-swap-install.sh \
+  https://raw.githubusercontent.com/MehrooExplains/openwrt-usb-extroot-swap/main/install.sh && \
+sh /tmp/openwrt-usb-extroot-swap-install.sh
+```
+
+If your firmware does not provide `wget` but has `curl`:
+
+```sh
+curl -fL \
+  https://raw.githubusercontent.com/MehrooExplains/openwrt-usb-extroot-swap/main/install.sh \
+  -o /tmp/openwrt-usb-extroot-swap-install.sh && \
+sh /tmp/openwrt-usb-extroot-swap-install.sh
+```
+
+### Run from a local clone
+
+If you already downloaded or cloned the repository:
 
 ```sh
 chmod +x install.sh

@@ -76,9 +76,28 @@ kmod-fs-ext4
 
 پکیج `swap-utils` ابزار `mkswap` را فراهم می‌کند و OpenWrt برای Extroot به `block-mount` نیاز دارد.
 
-## نصب
+## نصب سریع
 
-فایل‌های پروژه را روی روتر قرار دهید و اجرا کنید:
+اسکریپت نصب در ریشه پروژه با نام `install.sh` قرار دارد. برای نصب مستقیم روی OpenWrt فقط این دستور را اجرا کنید:
+
+```sh
+wget -O /tmp/openwrt-usb-extroot-swap-install.sh \
+  https://raw.githubusercontent.com/MehrooExplains/openwrt-usb-extroot-swap/main/install.sh && \
+sh /tmp/openwrt-usb-extroot-swap-install.sh
+```
+
+اگر `wget` روی Firmware شما موجود نیست ولی `curl` دارید:
+
+```sh
+curl -fL \
+  https://raw.githubusercontent.com/MehrooExplains/openwrt-usb-extroot-swap/main/install.sh \
+  -o /tmp/openwrt-usb-extroot-swap-install.sh && \
+sh /tmp/openwrt-usb-extroot-swap-install.sh
+```
+
+### اجرای فایل به‌صورت دستی
+
+اگر Repository را قبلاً دانلود یا Clone کرده‌اید:
 
 ```sh
 chmod +x install.sh
@@ -96,7 +115,7 @@ Installer به‌ترتیب:
 7. پارتیشن دوم را با تمام فضای باقی‌مانده `ext4` می‌کند.
 8. Overlay فعلی OpenWrt را روی Extroot کپی می‌کند.
 9. Swap و Extroot را با UUID در `fstab` ثبت می‌کند.
-10. برای Extroot مقدار `delay_root=15` قرار می‌دهد تا USBهای کندتر هنگام Boot فرصت شناسایی داشته باشند. OpenWrt نیز افزایش `delay_root` را برای مواردی که Extroot دیر شناسایی می‌شود پیشنهاد می‌کند.
+10. برای Extroot مقدار `delay_root=15` قرار می‌دهد تا USBهای کندتر هنگام Boot فرصت شناسایی داشته باشند.
 
 در پایان می‌توانید همان لحظه Reboot کنید یا بعداً دستی Reboot کنید.
 
@@ -108,7 +127,7 @@ cat /proc/swaps
 block info
 ```
 
-باید فضای `/` و `/overlay` تقریباً برابر فضای باقی‌مانده فلش باشد و Swap نیز در `/proc/swaps` دیده شود. مستندات OpenWrt نیز برای تست Extroot بررسی Mount شدن `/overlay` و مقایسه فضای `/` و `/overlay` را پیشنهاد می‌کنند.
+باید فضای `/` و `/overlay` تقریباً برابر فضای باقی‌مانده فلش باشد و Swap نیز در `/proc/swaps` دیده شود.
 
 اگر `health-check.sh` کنار Installer موجود باشد، دستور زیر نیز نصب می‌شود:
 
@@ -129,7 +148,7 @@ chmod +x disable.sh
 
 ## نکات مهم
 
-- Swap جای RAM واقعی را نمی‌گیرد. OpenWrt هم هشدار می‌دهد که Swap روی حافظه ذخیره‌سازی بسیار کندتر از RAM است.
+- Swap جای RAM واقعی را نمی‌گیرد.
 - استفاده دائمی از فلش USB بی‌کیفیت برای Overlay و Swap می‌تواند عمر فلش را کاهش دهد.
 - Extroot برای بوت به شناسایی به‌موقع حافظه خارجی وابسته است.
 - قبل از استفاده روی روتر دوردست یا حیاتی، فرآیند Boot و Recovery را حداقل یک بار تست کنید.

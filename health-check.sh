@@ -57,7 +57,7 @@ printf '\nFilesystem usage:\n'
 df -h / /overlay 2>/dev/null || true
 
 printf '\nMemory and swap:\n'
-free -m 2>/dev/null || cat /proc/meminfo | head
+free -m 2>/dev/null || head /proc/meminfo
 
 if [ "$FAILS" -eq 0 ]; then
     printf '\nAll essential checks passed.\n'

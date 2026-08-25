@@ -82,8 +82,8 @@ block_size_mib() {
 
 block_model() {
     name="$1"
-    vendor="$(cat "/sys/class/block/$name/device/vendor" 2>/dev/null | sed 's/[[:space:]]*$//' || true)"
-    model="$(cat "/sys/class/block/$name/device/model" 2>/dev/null | sed 's/[[:space:]]*$//' || true)"
+    vendor="$(sed 's/[[:space:]]*$//' "/sys/class/block/$name/device/vendor" 2>/dev/null || true)"
+    model="$(sed 's/[[:space:]]*$//' "/sys/class/block/$name/device/model" 2>/dev/null || true)"
     printf '%s %s' "$vendor" "$model" | sed 's/^ *//; s/ *$//'
 }
 
@@ -155,7 +155,9 @@ else
     printf '\nSelect the USB disk number: ' >/dev/tty
     IFS= read -r choice </dev/tty
     case "$choice" in *[!0-9]*|'') die "Invalid selection." ;; esac
-    [ "$choice" -ge 1 ] 2>/dev/null && [ "$choice" -le "$#" ] 2>/dev/null || die "Selection out of range."
+    if ! { [ "$choice" -ge 1 ] 2>/dev/null && [ "$choice" -le "$#" ] 2>/dev/null; }; then
+        die "Selection out of range."
+    fi
     eval "SELECTED=\${$choice}"
 fi
 
@@ -348,7 +350,10 @@ EOF_STATE
 chmod 600 "$STATE_DIR/state"
 
 # Install health checker if the script is being run from a cloned project directory.
-SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || true)"
+SCRIPT_DIR=""
+if resolved_script_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd)"; then
+    SCRIPT_DIR="$resolved_script_dir"
+fi
 if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/health-check.sh" ]; then
     cp "$SCRIPT_DIR/health-check.sh" /usr/bin/openwrt-usb-extroot-health
     chmod 755 /usr/bin/openwrt-usb-extroot-health

@@ -4,7 +4,7 @@ Failed to create stream fd: Operation not permitted
 # openwrt-usb-extroot-swap
 
 <p align="center">
-  <strong>🇬🇧 English</strong>
+  <strong><img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/Flag_of_the_United_Kingdom.svg?width=48" width="28" alt="United Kingdom flag"> English</strong>
   &nbsp;|&nbsp;
   <a href="README.fa.md"><img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/State_flag_of_the_Imperial_State_of_Iran_(with_standardized_lion_and_sun).svg?width=48" width="28" alt="Iranian Lion and Sun flag"> فارسی</a>
 </p>

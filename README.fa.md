@@ -1,3 +1,6 @@
+Failed to create stream fd: Operation not permitted
+Failed to create stream fd: Operation not permitted
+Failed to create stream fd: Operation not permitted
 # openwrt-usb-extroot-swap
 
 <p align="center">
@@ -79,6 +82,27 @@ kmod-fs-ext4
 ```
 
 پکیج `swap-utils` ابزار `mkswap` را فراهم می‌کند و OpenWrt برای Extroot به `block-mount` نیاز دارد.
+
+### ترتیب بررسی پیش‌نیازها
+
+پیش از شناسایی یا تغییر هر دیسک USB، Installer مراحل زیر را کامل می‌کند:
+
+۱. `apk` یا `opkg` را تشخیص می‌دهد.
+
+۲. نصب‌بودن تک‌تک پکیج‌های ضروری Storage را بررسی می‌کند.
+
+۳. فقط اگر حداقل یک پکیج مفقود باشد، فهرست Packageها را به‌روزرسانی می‌کند.
+
+۴. فقط پکیج‌های مفقود را نصب می‌کند.
+
+۵. در صورت نصب‌نبودن، Driver اختیاری UAS را نیز امتحان می‌کند.
+
+۶. وجود واقعی تمام Commandهای ضروری را پس از نصب بررسی می‌کند.
+
+۷. فقط پس از موفقیت اعتبارسنجی وارد تنظیم fstab و شناسایی USB می‌شود.
+
+اگر پکیج ضروری نصب نشود یا Command مربوطه همچنان موجود نباشد، اسکریپت پیش از
+هرگونه پارتیشن‌بندی یا فرمت متوقف خواهد شد.
 
 ## پیش‌نیازهای نصب
 

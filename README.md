@@ -1,3 +1,6 @@
+Failed to create stream fd: Operation not permitted
+Failed to create stream fd: Operation not permitted
+Failed to create stream fd: Operation not permitted
 # openwrt-usb-extroot-swap
 
 <p align="center">
@@ -85,6 +88,21 @@ kmod-fs-ext4
 ```
 
 `kmod-usb-storage-uas` is attempted as an optional package for compatible USB storage.
+
+### Prerequisite preflight order
+
+Before detecting or modifying any USB disk, the installer completes this sequence:
+
+1. Detects `apk` or `opkg`.
+2. Checks every required storage package individually.
+3. Updates package indexes only when at least one required package is missing.
+4. Installs only the missing required packages.
+5. Tries the optional UAS driver when it is not already installed.
+6. Verifies that every required command is actually available.
+7. Continues to fstab and USB detection only after verification succeeds.
+
+If a required package cannot be installed or its command remains unavailable,
+the installer stops before partitioning or formatting a disk.
 
 ## Requirements before installation
 

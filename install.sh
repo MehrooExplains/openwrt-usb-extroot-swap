@@ -1,3 +1,6 @@
+Failed to create stream fd: Operation not permitted
+Failed to create stream fd: Operation not permitted
+Failed to create stream fd: Operation not permitted
 #!/bin/sh
 # openwrt-usb-extroot-swap
 # Safely prepare a USB drive as swap + extroot for OpenWrt.
@@ -32,31 +35,64 @@ if command -v apk >/dev/null 2>&1; then
     PKG_MGR="apk"
     pkg_update() { apk update; }
     pkg_install() { apk add "$@"; }
+    package_installed() { apk info -e "$1" >/dev/null 2>&1; }
 elif command -v opkg >/dev/null 2>&1; then
     PKG_MGR="opkg"
     pkg_update() { opkg update; }
     pkg_install() { opkg install "$@"; }
+    package_installed() { opkg status "$1" 2>/dev/null | grep -q '^Status: install ok installed'; }
 else
     die "Neither apk nor opkg was found."
 fi
+
+ensure_packages() {
+    needs_install=0
+    for package in "$@"; do
+        if package_installed "$package"; then
+            log "Prerequisite package already installed: $package"
+        else
+            log "Missing prerequisite package: $package"
+            needs_install=1
+        fi
+    done
+
+    if [ "$needs_install" -eq 0 ]; then
+        return 0
+    fi
+
+    log "Updating package indexes for missing prerequisites..."
+    pkg_update || warn "Package index update returned an error; trying the available indexes."
+
+    for package in "$@"; do
+        if ! package_installed "$package"; then
+            log "Installing prerequisite package: $package"
+            pkg_install "$package" || die "Could not install required package: $package"
+        fi
+    done
+}
+
+verify_commands() {
+    for cmd in "$@"; do
+        command -v "$cmd" >/dev/null 2>&1 || die "Prerequisite verification failed; command '$cmd' is still missing."
+    done
+}
 
 log "OpenWrt: ${DISTRIB_RELEASE:-unknown}"
 log "Architecture: ${DISTRIB_ARCH:-unknown}"
 log "Package manager: $PKG_MGR"
 
-log "Updating package indexes..."
-pkg_update || warn "Package index update returned an error; continuing with available indexes."
-
-log "Installing required storage tools..."
-pkg_install block-mount e2fsprogs parted swap-utils kmod-usb-storage kmod-fs-ext4 \
-    || die "Could not install required storage packages."
+log "Checking storage prerequisites..."
+ensure_packages block-mount e2fsprogs parted swap-utils kmod-usb-storage kmod-fs-ext4
 
 # UAS is optional. Some USB 3 storage devices use it; classic flash drives do not require it.
-pkg_install kmod-usb-storage-uas >/dev/null 2>&1 || true
+if ! package_installed kmod-usb-storage-uas; then
+    log "Trying optional prerequisite package: kmod-usb-storage-uas"
+    pkg_install kmod-usb-storage-uas >/dev/null 2>&1 || warn "Optional UAS driver is unavailable; continuing with classic USB storage."
+fi
 
-for cmd in parted mkswap mkfs.ext4 block uci tar mount umount swapon swapoff; do
-    command -v "$cmd" >/dev/null 2>&1 || die "Required command '$cmd' is missing."
-done
+log "Verifying installed storage prerequisites..."
+verify_commands parted mkswap mkfs.ext4 block uci tar mount umount swapon swapoff
+log "All storage prerequisites are ready."
 
 if [ ! -f /etc/config/fstab ]; then
     log "Creating initial /etc/config/fstab..."

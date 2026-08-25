@@ -1,8 +1,12 @@
 # openwrt-usb-extroot-swap
 
 <p align="center">
-  <strong>English</strong> | <a href="README.fa.md">فارسی</a>
+  <strong>🇬🇧 English</strong>
+  &nbsp;|&nbsp;
+  <a href="README.fa.md"><img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/State_flag_of_the_Imperial_State_of_Iran_(with_standardized_lion_and_sun).svg?width=48" width="28" alt="Iranian Lion and Sun flag"> فارسی</a>
 </p>
+
+[![Shell checks](https://github.com/MehrooExplains/openwrt-usb-extroot-swap/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/MehrooExplains/openwrt-usb-extroot-swap/actions/workflows/shellcheck.yml)
 
 Automatically prepares a **USB flash drive for OpenWrt** as:
 
@@ -82,6 +86,36 @@ kmod-fs-ext4
 
 `kmod-usb-storage-uas` is attempted as an optional package for compatible USB storage.
 
+## Requirements before installation
+
+- A recoverable OpenWrt router with `firewall4`-era storage support
+- Root SSH access
+- One dedicated USB storage device that may be completely erased
+- Working internet access for package installation
+- Enough USB capacity for the selected swap size plus at least 128 MiB extroot
+- A current backup of important router configuration
+
+Disconnect any unrelated USB disks before running the installer. Although the
+script applies several safety checks, the final device choice and destructive
+confirmation remain the operator's responsibility.
+
+## Files and settings changed
+
+The installer creates two GPT partitions, formats swap and ext4, copies the
+current `/overlay`, and adds these named UCI sections:
+
+```text
+fstab.usb_extroot
+fstab.usb_swap
+fstab.rwm       (when the original overlay device can be detected)
+```
+
+State and backups are stored under:
+
+```text
+/etc/openwrt-usb-extroot-swap/
+```
+
 ## Quick installation
 
 The installer is available in the repository root as `install.sh`. To run it directly on OpenWrt:
@@ -149,6 +183,63 @@ If the original internal overlay cannot be accessed through `/rwm`, boot once wi
 - A cheap or failing flash drive can make package storage unreliable. Use a decent-quality drive for a permanent setup.
 - Swap on flash is much slower than RAM and causes writes to the USB device. It is useful as protection against out-of-memory situations, not as a replacement for real RAM.
 - Sysupgrade behavior and extroot restoration should be tested before relying on the device remotely.
+
+## Troubleshooting and recovery
+
+### USB device is not detected
+
+Check kernel and block-device output:
+
+```sh
+dmesg | tail -n 80
+block info
+ls -l /sys/class/block/
+```
+
+Try another USB port, power supply, enclosure, or flash drive. Some storage
+devices require `kmod-usb-storage-uas`; the installer attempts it when available.
+
+### Router boots but extroot is not active
+
+```sh
+block info
+uci show fstab
+logread | grep -Ei 'block|mount|extroot|overlay'
+df -h / /overlay
+```
+
+Confirm that the ext4 UUID matches `fstab.usb_extroot.uuid`. Slow storage may
+need a larger `fstab.@global[0].delay_root` value.
+
+### Router fails to boot with the USB drive
+
+Power off the router, remove the USB drive, and boot from internal storage.
+Then inspect or remove the project-created fstab sections. Keep a known recovery
+method—failsafe mode, serial console, or firmware recovery—available before
+deploying extroot on a remote router.
+
+### Swap is missing
+
+```sh
+cat /proc/swaps
+uci show fstab.usb_swap
+block info
+```
+
+The configured swap UUID must match the USB swap partition.
+
+## Development checks
+
+All scripts use POSIX `sh` for OpenWrt compatibility. Before submitting a
+change, run:
+
+```sh
+shellcheck -s sh install.sh health-check.sh disable.sh
+sh -n install.sh health-check.sh disable.sh
+```
+
+GitHub Actions performs the same ShellCheck validation on pushes and pull
+requests that change shell scripts or the workflow.
 
 ## License
 

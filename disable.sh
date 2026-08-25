@@ -29,6 +29,7 @@ else
 fi
 
 if [ -r /etc/openwrt-usb-extroot-swap/state ]; then
+    # shellcheck source=/dev/null
     . /etc/openwrt-usb-extroot-swap/state
     swapoff "${SWAP_PART:-}" 2>/dev/null || true
 fi

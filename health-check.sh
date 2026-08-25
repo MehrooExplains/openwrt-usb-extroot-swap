@@ -17,7 +17,6 @@ if [ -r "$STATE" ]; then
 else
     warn "Project state file not found; running generic checks"
     EXT_UUID=""
-    SWAP_UUID=""
 fi
 
 if grep -qE '[[:space:]]/overlay[[:space:]]' /proc/mounts; then

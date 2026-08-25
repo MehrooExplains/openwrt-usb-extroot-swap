@@ -1,8 +1,12 @@
 # openwrt-usb-extroot-swap
 
 <p align="center">
-  <a href="README.md">English</a> | <strong>فارسی</strong>
+  <a href="README.md">🇬🇧 English</a>
+  &nbsp;|&nbsp;
+  <strong><img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/State_flag_of_the_Imperial_State_of_Iran_(with_standardized_lion_and_sun).svg?width=48" width="28" alt="پرچم شیر و خورشید ایران"> فارسی</strong>
 </p>
+
+[![بررسی اسکریپت‌ها](https://github.com/MehrooExplains/openwrt-usb-extroot-swap/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/MehrooExplains/openwrt-usb-extroot-swap/actions/workflows/shellcheck.yml)
 
 این پروژه یک **فلش USB متصل به OpenWrt** را به‌صورت خودکار آماده می‌کند تا هم Swap داشته باشید و هم تقریباً تمام فضای باقی‌مانده فلش به **حافظه قابل استفاده OpenWrt برای نصب پکیج‌ها و برنامه‌ها** تبدیل شود.
 
@@ -75,6 +79,36 @@ kmod-fs-ext4
 ```
 
 پکیج `swap-utils` ابزار `mkswap` را فراهم می‌کند و OpenWrt برای Extroot به `block-mount` نیاز دارد.
+
+## پیش‌نیازهای نصب
+
+- روتر OpenWrt با امکان بازیابی در صورت بروز مشکل
+- دسترسی SSH با کاربر root
+- یک حافظه USB اختصاصی که پاک‌شدن کامل آن مجاز باشد
+- اینترنت فعال برای نصب پکیج‌ها
+- فضای کافی برای Swap انتخابی و حداقل ۱۲۸ MiB برای Extroot
+- پشتیبان به‌روز از تنظیمات مهم روتر
+
+پیشنهاد می‌شود پیش از اجرا، حافظه‌های USB نامرتبط را جدا کنید. اسکریپت چندین
+بررسی ایمنی انجام می‌دهد، اما مسئولیت انتخاب نهایی دیسک و تأیید عملیات پاک‌سازی
+با کاربر است.
+
+## فایل‌ها و تنظیمات تغییریافته
+
+Installer دو پارتیشن GPT می‌سازد، آن‌ها را به Swap و ext4 فرمت می‌کند، Overlay
+فعلی را کپی می‌کند و Sectionهای زیر را در UCI می‌سازد:
+
+```text
+fstab.usb_extroot
+fstab.usb_swap
+fstab.rwm       (اگر Overlay داخلی قابل تشخیص باشد)
+```
+
+State و نسخه‌های پشتیبان در مسیر زیر ذخیره می‌شوند:
+
+```text
+/etc/openwrt-usb-extroot-swap/
+```
 
 ## نصب سریع
 
@@ -152,6 +186,58 @@ chmod +x disable.sh
 - استفاده دائمی از فلش USB بی‌کیفیت برای Overlay و Swap می‌تواند عمر فلش را کاهش دهد.
 - Extroot برای بوت به شناسایی به‌موقع حافظه خارجی وابسته است.
 - قبل از استفاده روی روتر دوردست یا حیاتی، فرآیند Boot و Recovery را حداقل یک بار تست کنید.
+
+## رفع اشکال و بازیابی
+
+### USB شناسایی نمی‌شود
+
+```sh
+dmesg | tail -n 80
+block info
+ls -l /sys/class/block/
+```
+
+پورت USB، منبع تغذیه، قاب یا فلش دیگری را امتحان کنید. بعضی حافظه‌ها به
+`kmod-usb-storage-uas` نیاز دارند که Installer در صورت موجودبودن نصب می‌کند.
+
+### روتر بوت می‌شود ولی Extroot فعال نیست
+
+```sh
+block info
+uci show fstab
+logread | grep -Ei 'block|mount|extroot|overlay'
+df -h / /overlay
+```
+
+UUID پارتیشن ext4 باید با `fstab.usb_extroot.uuid` یکسان باشد. برای حافظه‌های
+کند ممکن است لازم باشد مقدار `fstab.@global[0].delay_root` افزایش پیدا کند.
+
+### روتر با USB بوت نمی‌شود
+
+روتر را خاموش، USB را جدا و دستگاه را از حافظه داخلی بوت کنید. سپس Sectionهای
+ساخته‌شده در fstab را بررسی یا حذف کنید. پیش از استفاده روی روتر دوردست، یک
+روش بازیابی مانند Failsafe، Serial Console یا Firmware Recovery آماده داشته باشید.
+
+### Swap فعال نیست
+
+```sh
+cat /proc/swaps
+uci show fstab.usb_swap
+block info
+```
+
+UUID ثبت‌شده برای Swap باید با UUID پارتیشن Swap روی USB یکسان باشد.
+
+## بررسی توسعه
+
+تمام اسکریپت‌ها برای سازگاری OpenWrt با POSIX `sh` نوشته شده‌اند:
+
+```sh
+shellcheck -s sh install.sh health-check.sh disable.sh
+sh -n install.sh health-check.sh disable.sh
+```
+
+GitHub Actions همین بررسی را هنگام تغییر اسکریپت‌ها یا workflow اجرا می‌کند.
 
 ## منابع
 

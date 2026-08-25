@@ -23,6 +23,7 @@ trap cleanup EXIT INT TERM
 
 [ "$(id -u)" = "0" ] || die "Run this installer as root."
 [ -r /etc/openwrt_release ] || die "This installer is for OpenWrt only."
+# shellcheck source=/dev/null
 . /etc/openwrt_release
 
 mkdir -p "$TMP_DIR" "$MOUNT_DIR" "$STATE_DIR" "$BACKUP_DIR"
@@ -132,6 +133,8 @@ for sysdev in /sys/class/block/sd*; do
     CANDIDATES="$CANDIDATES $name"
 done
 
+# Device names come only from /sys/class/block and cannot contain whitespace or globs.
+# shellcheck disable=SC2086
 set -- $CANDIDATES
 [ "$#" -gt 0 ] || die "No safe USB storage device was detected. Connect a USB flash drive and run the installer again."
 
@@ -229,7 +232,7 @@ IFS= read -r confirm </dev/tty
 [ "$confirm" = "ERASE $DISK" ] || die "Confirmation did not match. Nothing was changed."
 
 # Unmount ordinary auto-mounted partitions on the selected disk. Critical disks were filtered earlier.
-for p in /dev/${SELECTED}[0-9]* /dev/${SELECTED}p[0-9]*; do
+for p in "/dev/${SELECTED}"[0-9]* "/dev/${SELECTED}"p[0-9]*; do
     [ -e "$p" ] || continue
     umount "$p" 2>/dev/null || true
 done
@@ -345,7 +348,7 @@ EOF_STATE
 chmod 600 "$STATE_DIR/state"
 
 # Install health checker if the script is being run from a cloned project directory.
-SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || true)"
+SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || true)"
 if [ -n "$SCRIPT_DIR" ] && [ -f "$SCRIPT_DIR/health-check.sh" ]; then
     cp "$SCRIPT_DIR/health-check.sh" /usr/bin/openwrt-usb-extroot-health
     chmod 755 /usr/bin/openwrt-usb-extroot-health
